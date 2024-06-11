@@ -15,14 +15,14 @@ class TruckLoadingApp:
     def load_products_from_db(self):
         conn = sqlite3.connect('products.db')
         cursor = conn.execute('SELECT name, length, width, height, quantity FROM products')
-        products = [{"name": row[0], "length": row[1], "width": row[2], "height": row[3], "quantity": row[4]} for row in cursor]
+        products = [{"name": row[0], "length": float(row[1]), "width": float(row[2]), "height": float(row[3]), "quantity": int(row[4])} for row in cursor]
         conn.close()
         return products
 
     def load_trucks_from_db(self):
         conn = sqlite3.connect('trucks.db')
         cursor = conn.execute('SELECT name, length, width, height FROM trucks')
-        trucks = [{"name": row[0], "length": row[1], "width": row[2], "height": row[3]} for row in cursor]
+        trucks = [{"name": row[0], "length": float(row[1]), "width": float(row[2]), "height": float(row[3])} for row in cursor]
         conn.close()
         return trucks
 
@@ -30,7 +30,7 @@ class TruckLoadingApp:
         self.product_list_frame = tk.Frame(self.root)
         self.product_list_frame.pack(pady=10)
 
-        self.product_list = ttk.Treeview(self.product_list_frame, columns=("نام", "طول", "عرض", "ارتفاع", "تعداد"), show="headings")
+        self.product_list = ttk.Treeview(self.product_list_frame, columns=("نام", "طول", "عرض", "ارتفاع", "تعداد"), show="headings", selectmode="extended")
         self.product_list.heading("نام", text="نام")
         self.product_list.heading("طول", text="طول")
         self.product_list.heading("عرض", text="عرض")
@@ -59,26 +59,46 @@ class TruckLoadingApp:
 
         tk.Button(self.result_frame, text="پیدا کردن ماشین مناسب", command=self.find_suitable_truck).pack()
 
-    def calculate_total_volume(self):
+    def calculate_total_volume(self, selected_products):
         total_volume = 0
-        for product in self.products:
+        for product in selected_products:
             product_volume = product["length"] * product["width"] * product["height"] * product["quantity"]
             total_volume += product_volume
         return total_volume
 
     def find_suitable_truck(self):
-        total_volume = self.calculate_total_volume() / 100**3  # تبدیل ابعاد به متر مکعب
+        selected_items = self.product_list.selection()
+        if not selected_items:
+            messagebox.showwarning("هشدار", "لطفاً حداقل یک محصول را انتخاب کنید")
+            return
+
+        selected_products = []
+        for item in selected_items:
+            item_values = self.product_list.item(item, "values")
+            product = {
+                "name": item_values[0],
+                "length": float(item_values[1]),
+                "width": float(item_values[2]),
+                "height": float(item_values[3]),
+                "quantity": int(item_values[4])
+            }
+            selected_products.append(product)
+
+        total_volume = self.calculate_total_volume(selected_products) / 100**3  # تبدیل ابعاد به متر مکعب
         suitable_truck = None
+        min_remaining_volume = float('inf')  # حجم باقی‌مانده را برابر بی‌نهایت مقداردهی اولیه می‌کنیم
 
         for truck in self.trucks:
             truck_volume = truck["length"] * truck["width"] * truck["height"]
-            if truck_volume >= total_volume:
+            remaining_volume = truck_volume - total_volume
+            if remaining_volume >= 0 and remaining_volume < min_remaining_volume:  # فقط ماشین‌هایی را در نظر بگیرید که حجم باقی‌مانده مثبت باشد
                 suitable_truck = truck
-                break
+                min_remaining_volume = remaining_volume
 
         if suitable_truck:
-            empty_volume = truck_volume - total_volume
-            messagebox.showinfo("نتیجه", f"ماشین مناسب {suitable_truck['name']} است و حجم خالی {empty_volume} متر مکعب است")
+            empty_volume = min_remaining_volume
+            empty_volume_cm3 = empty_volume * 100**3  # تبدیل به سانتی‌متر مکعب
+            messagebox.showinfo("نتیجه", f"ماشین مناسب {suitable_truck['name']} است و حجم خالی {empty_volume:.2f} متر مکعب ({empty_volume_cm3:.2f}) است")
         else:
             messagebox.showerror("خطا", "هیچ ماشین مناسبی پیدا نشد")
 
