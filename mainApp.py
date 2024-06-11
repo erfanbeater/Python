@@ -46,20 +46,15 @@ class TruckLoadingApp:
         self.truck_list_frame = tk.Frame(self.root)
         self.truck_list_frame.pack(pady=10)
 
-        self.truck_list = ttk.Treeview(self.truck_list_frame, columns=("نام", "طول", "عرض", "ارتفاع"), show="headings")
-        self.truck_list.heading("نام", text="نام")
-        self.truck_list.heading("طول", text="طول")
-        self.truck_list.heading("عرض", text="عرض")
-        self.truck_list.heading("ارتفاع", text="ارتفاع")
-        self.truck_list.pack()
-
-        for truck in self.trucks:
-            self.truck_list.insert("", "end", values=(truck["name"], truck["length"], truck["width"], truck["height"]))
+        truck_label_text = "\n\n".join([f"{truck['name']}" for truck in self.trucks])
+        self.truck_list_label = tk.Label(self.truck_list_frame, text=truck_label_text)
+        self.truck_list_label.pack()
 
         self.result_frame = tk.Frame(self.root)
         self.result_frame.pack(pady=10)
 
         tk.Button(self.result_frame, text="پیدا کردن ماشین مناسب", command=self.find_suitable_truck).pack()
+
 
     def calculate_total_volume(self, selected_products):
         total_volume = 0
@@ -109,7 +104,7 @@ class TruckLoadingApp:
         if suitable_truck:
             empty_volume = min_remaining_volume
             empty_volume_cm3 = empty_volume * 100**3  # تبدیل به سانتی‌متر مکعب
-            messagebox.showinfo("نتیجه", f"ماشین مناسب {suitable_truck['name']} است و حجم خالی {empty_volume:.2f} متر مکعب ({empty_volume_cm3:.2f}) است")
+            messagebox.showinfo("نتیجه", f"ماشین مناسب {suitable_truck['name']} است و حجم خالی {empty_volume:.2f} متر مکعب است")
         else:
             messagebox.showerror("خطا", "هیچ ماشین مناسبی پیدا نشد")
 
