@@ -1,7 +1,7 @@
 import sqlite3
 import tkinter as tk
-from tkinter import messagebox, ttk
-
+from tkinter import messagebox, ttk 
+from tkinter.simpledialog import askinteger
 class TruckLoadingApp:
     def __init__(self, root):
         self.root = root
@@ -41,6 +41,8 @@ class TruckLoadingApp:
         for product in self.products:
             self.product_list.insert("", "end", values=(product["name"], product["length"], product["width"], product["height"], product["quantity"]))
 
+        self.product_list.bind("<Double-1>", self.edit_quantity)
+
         self.truck_list_frame = tk.Frame(self.root)
         self.truck_list_frame.pack(pady=10)
 
@@ -65,6 +67,15 @@ class TruckLoadingApp:
             product_volume = product["length"] * product["width"] * product["height"] * product["quantity"]
             total_volume += product_volume
         return total_volume
+
+    def edit_quantity(self, event):
+        selected_item = self.product_list.selection()[0]
+        item_values = self.product_list.item(selected_item, "values")
+        quantity = item_values[4]
+
+        new_quantity = askinteger("ویرایش تعداد", f"تعداد فعلی: {quantity}\nتعداد جدید:")
+        if new_quantity is not None:
+            self.product_list.item(selected_item, values=(item_values[0], item_values[1], item_values[2], item_values[3], new_quantity))
 
     def find_suitable_truck(self):
         selected_items = self.product_list.selection()
